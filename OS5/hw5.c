@@ -3,7 +3,8 @@
 #include <time.h>
 #include "mcsim.h"
 
-#define DEBUG 1
+// #include <limits.h>        //for modifying memory limits
+
 
 double gcount;    // global counter -- a double to handle large sums (billions+)
 long numits;      // global variable for number of iterations (see step 3 below)
@@ -53,41 +54,67 @@ int main( int argc, char** argv ) {
       time in seconds = 0.0761
 
   */
+   // - pointer to an array of pthread structures
   pthread_t *threads;
-  int i, threadid = 0, exit_status, numthreads, err;
-  double elapsed;
+  int i,        //    - counting variables for loops
+  threadid = 0, //    - thread id
+  exit_status,  //    - exit status of joined thread
+  numthreads,   //    - number of threads to run
+  err;          //    - error code for exit
+  double time_elapsed;
+
   struct rlimit max_threads;
   struct timespec start, end;
-  if (argc < 3){
-    fprintf(stderr, "Not enough args. Expected: ./hw5 %s <threadcount> <iterations>\n", argv[0]);
+
+  //check for too little args
+  if (argc < 3)
+  {
     exit(1);
   }
+
+  //grab parameters from command line args
   numthreads = atoi(argv[1]);
   numits = atoi(argv[2]);
+
   getrlimit(RLIMIT_NPROC, &max_threads);
-  if (DEBUG){ printf("DEBUGGING: max threads: cur=%lu, max=%lu\n", max_threads.rlim_cur, max_threads.rlim_max); }
-  if (numthreads > max_threads.rlim_cur){
-    fprintf(stderr, "Cannot fit all these threads in me (%lu), please try again\n", max_threads.rlim_cur);
+
+  if (numthreads > max_threads.rlim_cur)
+  {
+    //too many threads
     exit(1);
   }
+
+  //allocate space for threads
   threads = (pthread_t*) malloc(sizeof(pthread_t) * numthreads);
+
+  //start the clock
   clock_gettime(CLOCK_REALTIME, &start);
-  for (i = 0; i < numthreads; i++){
-    //          pthread_t*, attrs, routine*, args*
-    if ((err = pthread_create(&(threads[i]), NULL, &th_routine, (void*) threadid++)) != 0){
-      fprintf(stderr, "I am not long for this world, the creation of thread %d killed me [err: %d]\n", threadid, err);
+
+  //create the threads
+  for (i = 0; i < numthreads; i++)
+  {
+    if ((err = pthread_create(&(threads[i]), NULL, &th_routine, (void*) threadid++)) != 0)
+    {
+      //thread killed it
       exit(err);
     }
   }
-  for (i = 0; i < numthreads; i++){
-    if ((err = pthread_join(threads[i], NULL)) != 0){
-      fprintf(stderr, "I am not long for this world, joining of thread %d killed me [err: %d]\n", i, err);
+  //join the threads
+  for (i = 0; i < numthreads; i++)
+  {
+    if ((err = pthread_join(threads[i], NULL)) != 0)
+    {
+      //thread join killed it
       exit(err);
     }
   }
+
+  //stop the clock
   clock_gettime(CLOCK_REALTIME, &end);
-  elapsed = mydifftime(&start, &end);
-  printf("mc value of pi: %.6f\nvalue of count: %.0f\ntime in seconds: %.4f\n", (4 * gcount/(numits * numthreads)), gcount, elapsed / 1000000000);
+  //determine elapsed time
+  time_elapsed = mydifftime(&start, &end);
+
+  printf("mc value of pi: %.6f\nvalue of count: %.0f\ntime in seconds: %.4f\n\n", (4 * gcount/(numits * numthreads)), gcount, time_elapsed / 1000000000);
   return 0;
 
 } // end main function
