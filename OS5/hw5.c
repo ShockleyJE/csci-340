@@ -3,7 +3,7 @@
 #include <time.h>
 #include "mcsim.h"
 
-// #include <limits.h>        //for modifying memory limits
+#include <limits.h>        //for modifying memory limits
 
 
 double gcount;    // global counter -- a double to handle large sums (billions+)
@@ -65,8 +65,13 @@ int main( int argc, char** argv ) {
   thread_id = 0,   //    - thread id
   exit_status,    //    - exit status of joined thread
   num_threads,   //    - number of threads to run
-  error;          //    - error code for exit
+  error;        //    - error code for exit
   double time_elapsed;
+
+  // for the over-achievers
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_attr_setstacksize(&attr, PTHREAD_STACK_MIN);
 
   struct rlimit max_threads;
   struct timespec start, end;
@@ -96,7 +101,7 @@ int main( int argc, char** argv ) {
   for (i = 0; i < num_threads; i++)
   {
 
-    if ((error = pthread_create(&(threads[i]), NULL, (void*) th_routine, (void*) thread_id++)) != 0)
+    if ((error = pthread_create(&(threads[i]), &attr, (void*) th_routine, (void*) thread_id++)) != 0)
     {
       //if an error occurs during thread creation - exit simulation program immediately
       exit(error);
@@ -127,6 +132,7 @@ int main( int argc, char** argv ) {
 
   //  13. Call pthread terminate function (hint: pthread_exit function) 
   //  NOTE: is it considered best practice to terminate a thread from main?
+  pthread_exit(NULL);
 
   //  14. exit simulation program
   return 0;
