@@ -49,8 +49,7 @@ int main( int argc, char** argv ) {
 	// 	  immediately exit the program with status value 2.
 	if ((status = pthread_join(main_thread, NULL)) != 0){
 		//display error message
-		fprintf(stderr, "failed to join main_thread
-					terminating with error code: %d\n", status);
+		fprintf(stderr, "failed to join main_thread terminating with error code: %d\n", status);
 		//exit with status value 2
 		exit(2);
 	}
