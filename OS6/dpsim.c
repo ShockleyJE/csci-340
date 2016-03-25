@@ -10,7 +10,7 @@ static const unsigned int NUM_CHOPSTICKS = 5;
 
 static int chopsticks[5];
 static pthread_mutex_t mutex[5];
-static pthread_t philosphers[5];
+static pthread_t philosophers[5];
 
 
 void* th_main( void* th_main_args ) {
