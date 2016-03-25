@@ -15,24 +15,16 @@ static pthread_mutex_t mutex[5];
 static pthread_t philosophers[5];
 
 
-int isdead(){
-	// return 1 if there is deadlock
-	// assumes everyone grabs the lower-nembered chopstick first
-	// (the one to the phil's right)
-	// excpet p4, who grabs c4 then c0
-
-	// cannot have critical sections within th_main,
-	// must hope that no writes happen in the following loop
+int isdeadlocked(){
 	int i;
-	for (i = 0; i < NUM_CHOPSTICKS; i++){
+	for (i = 0; i < NUM_CHOPSTICKS; i++)
+	{
+		// check see if everyone has a chopstick
 		if (chopsticks[i] == -1) return 0;
-		// can't have deadlock if there's a free stick
+		//check to see if someone is eating
 		else if (chopsticks[i] == chopsticks[(i +1) % 5]) return 0;
-		// can't have deadlock if anyone is successfully eating
 	}
-
 	return 1;
-
 }
 
 
@@ -56,21 +48,7 @@ void* th_main( void* th_main_args ) {
 		while (1){
 				delay(1000);
 
-				//check for deadlock
-				int isdeadlocked = 1; // 1 signals deadlock
-				for (i = 0; i < NUM_CHOPSTICKS; i++)
-				{
-					if (chopsticks[i] == -1)
-					{
-						isdeadlocked= 0;
-					}
-					else if (chopsticks[i] == chopsticks[(i +1) % 5])
-					{
-						isdeadlocked= 0;
-					}
-				}
-
-				if (isdeadlocked == 1)
+				if (isdeadlocked())
 				{
 					printf("Deadlock condition, terminating\n");
 					//terminate the loop and goto step 4
