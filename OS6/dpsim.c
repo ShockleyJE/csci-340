@@ -6,9 +6,9 @@
 
 
 static const unsigned int NUM_PHILOSPHERS = 5;
-static const unsigned int NUM_FORKS = 5;
+static const unsigned int NUM_CHOPSTICKS = 5;
 
-static int forks[5];
+static int chopsticks[5];
 static pthread_mutex_t mutex[5];
 static pthread_t philosphers[5];
 
