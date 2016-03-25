@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include "dpsim.h"
+#include <pthread.h>
 
 /**************************************************
 
@@ -24,10 +25,6 @@ In this function perform the following steps:
 */
 
 int main( int argc, char** argv ) {
-
-
-	// ---------------------------------------
-	// TODO: you add your implementation here
 
 	// 1. Create the following variables:
 	// 	- main_thread (pthread_t)
