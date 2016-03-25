@@ -5,7 +5,7 @@
 //maybe, he's not sure. So check on this
 
 
-static const unsigned int NUM_PHILOSPHERS = 5;
+static const unsigned int NUM_PHILOSOPHERS = 5;
 static const unsigned int NUM_CHOPSTICKS = 5;
 
 static int chopsticks[5];
