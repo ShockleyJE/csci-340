@@ -115,7 +115,7 @@ void eat( int phil_id ) {
 	pthread_mutex_unlock(&(mutex[phil_id]));
 
 	// delays for no more than 20,000 nanoseconds
-	delay(19999);
+	delay(10000);
 
 	//return if left chopstick is already taken
 	if (chopsticks[left] != -1) { return; }
