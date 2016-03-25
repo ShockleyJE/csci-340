@@ -1,6 +1,6 @@
 #include "dpsim.h"
 #include <pthread.h>
-
+#include <signal.h>
 
 //class notes
 //signal in pthread kill is the same as the signal looked at before (sigkill, #9)
