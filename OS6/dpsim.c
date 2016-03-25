@@ -54,7 +54,7 @@ void* th_main( void* th_main_args ) {
 		}
 		// 3. Execute a infinite loop that does the following: ...
 		while (1){
-				delay(100000);
+				delay(1000);
 
 				//check for deadlock
 				int isdeadlocked = 1; // 1 signals deadlock
@@ -68,7 +68,6 @@ void* th_main( void* th_main_args ) {
 					{
 						isdeadlocked= 0;
 					}
-
 				}
 
 				if (isdeadlocked == 1)
