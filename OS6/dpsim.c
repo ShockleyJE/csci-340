@@ -151,7 +151,7 @@ void eat( int phil_id ) {
 
 	// After having picked up both chopsticks (as described) the philosopher will delay a
  	// 	number of nanoseconds that is determined by you experimentally.
-	delay(100000);
+	delay(1000);
 	// After the delay completes
 
 	//release left (since right was picked up first)
