@@ -1,4 +1,6 @@
 #include "dpsim.h"
+#include <pthread.h>
+
 
 //class notes
 //signal in pthread kill is the same as the signal looked at before (sigkill, #9)
@@ -82,14 +84,6 @@ void* th_main( void* th_main_args ) {
 					if (chopsticks[i] == chopsticks[(i + 1) % 5]) printf("%d, ", i);
 				}
 				printf("are eating\n");
-				// if (DEBUG){
-				// 	printf("chopsticks = {");
-				// 	for (i = 0; i < NUM_CHOPSTICKS; i++)
-				// 	{
-				// 		printf("%d ", chopsticks[i]);
-				// 	}
-				// 	printf("}\n");
-				// }
 			}
 			// 4. Kill each philosopher thread
 			for (i = 0; i < NUM_PHILOSOPHERS; i++)
