@@ -46,7 +46,7 @@ void* th_main( void* th_main_args ) {
 		}
 		// 3. Execute a infinite loop that does the following: ...
 		while (1){
-				delay(1000);
+				delay(50000);
 
 				if (isdeadlocked())
 				{
@@ -82,7 +82,7 @@ void* th_phil( void* th_phil_args ) {
 	while(1)
 	{
 		// - call the delay function for thinking (you specify nanosec sleep value)
-		delay(100000);
+		delay(150000);
 		// - call the eat function (argument is the philosopher id)
 		eat(id);
 	}
@@ -128,7 +128,7 @@ void eat( int phil_id ) {
 
 	// After having picked up both chopsticks (as described) the philosopher will delay a
  	// 	number of nanoseconds that is determined by you experimentally.
-	delay(1000);
+	delay(100000);
 	// After the delay completes
 
 	//release left (since right was picked up first)
@@ -136,7 +136,7 @@ void eat( int phil_id ) {
 	chopsticks[left] = -1;
 	pthread_mutex_unlock(&(mutex[left]));
 
-	delay(9999);
+	delay(7500);
 
 	//release right
 	pthread_mutex_lock(&(mutex[phil_id]));
