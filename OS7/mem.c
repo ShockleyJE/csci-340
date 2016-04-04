@@ -3,25 +3,155 @@
 #include "mem.h"
 
 /*
-  Physical memory array. This is a static global array for all
-  functions in this file.  An element in the array with a value of
-  zero represents a free unit of memory.
+  Physical memory array. This is a static global array for all functions in this file.
+  An element in the array with a value of zero represents a free unit of memory.
 */
-static dur_t* memory;
+static unsigned int* memory;
 
 /*
- The size (i.e. number of units) of the physical memory array. This is
- a static global variable used by functions in this file.
+ The size (i.e. number of units) of the physical memory array. This is a static global
+ variable used by functions in this file.
+
  */
-static int mem_size;
+static unsigned int mem_size;
 
 
 /*
- The last_placement_position variable contains the end position of the
- last allocated unit used by the next fit placement algorithm.
+ The last_placement_position variable contains the end position of the last
+ allocated unit used by the next fit placement algorithm.
  */
-static int last_placement_position;
+static unsigned int last_placement_position;
 
+void print_mem(){
+	int i;
+	printf("memory: ");
+	for (i = 0; i < mem_size; i++){
+		printf("%d ", memory[i]);
+	}
+	printf("\n");
+}
+
+int getchunk(int startindex){
+	int i, cursize = 0;
+	for (i = startindex; i < mem_size; i++){
+		if (memory[i] == 0){
+			cursize++;
+		}
+		else break;
+	}
+	return cursize;
+}
+
+int getfirstempty(){
+	int i;
+	for (i = 0; i < mem_size; i++){
+		if (memory[i] == 0){
+			return i;
+		}
+	}
+	return -1;
+}
+
+void allocate(int size, int duration, int startindex){
+	int x;
+	for (x = 0; x < size; x++){
+		memory[startindex + x] = duration;
+	}
+}
+
+int firstfit(int size, int duration){
+	int i, chunksize, done = 0, tries = 0;
+	i = getfirstempty();
+	if (i == -1){
+		// no free slots, return -1 for failure to allocate
+		return -1;
+	}
+	while (i < mem_size && !done){
+		chunksize = getchunk(i);
+		if (chunksize <= 0){
+			i++;
+			//return -1;
+		}
+		else if (chunksize >= size){
+			// allocate it
+			allocate(size, duration, i);
+			done = 1;
+		}
+		else {
+			tries += 1;
+			i += chunksize;
+		}
+	}
+	if (done) {
+		return tries;
+	}
+	else{
+		return -1;
+	}
+}
+
+int nextfit(int size, int duration){
+	int i, chunksize, done = 0, tries = 0, hitend = 0;
+	i = last_placement_position;
+	while (i < mem_size && !done){
+		chunksize = getchunk(i);
+		if (chunksize <= 0){
+			i++;
+		}
+		else if (chunksize >= size){
+			allocate(size, duration, i);
+			last_placement_position = i;
+			done = 1;
+		}
+		else {
+			tries++;
+			i += chunksize;
+			if (!hitend && i >= mem_size){
+				// wrap around once
+				hitend = 1;
+				i = i % mem_size;
+			}
+		}
+	}
+	if (done){
+		return tries;
+	} else {
+		return -1;
+	}
+}
+
+int bestfit(int size, int duration){
+   int i, chunksize, found = 0, bestindex, bestsize = mem_size + 1, tries = 0;
+   i = getfirstempty();
+   while (i < mem_size){
+      chunksize = getchunk(i);
+      if (chunksize <= 0){
+         i++;
+      }
+      else if (chunksize == size){
+         found = 1;
+         return i;
+      }
+      else if (chunksize > size && chunksize < bestsize){
+         bestindex = i;
+         bestsize = chunksize;
+			found = 1;
+			i += chunksize;
+      }
+      else {
+			tries++;
+			i += chunksize;
+      }
+   }
+
+	if (found){
+		allocate(size, duration, bestindex);
+		return tries;
+	}
+	else{
+		return -1;
+	}
+}
 /*
   Using the memory placement algorithm, strategy, allocate size
   units of memory that will reside in memory for duration time units.
@@ -48,7 +178,6 @@ int mem_allocate(mem_strategy_t strategy, unsigned int size, unsigned int durati
 			result = bestfit(size, duration);
 			break;
 		default:
-			fprintf(stderr, "strategy switch error\n");
 			exit(1);
 	}
 	return result;
@@ -65,7 +194,7 @@ int mem_single_time_unit_transpired(){
 			memory[i]--;
 		}
 	}
-	return 0;
+	return 0; // ???
 }
 
 /*
@@ -74,16 +203,17 @@ int mem_single_time_unit_transpired(){
   frag_size.
  */
 int mem_fragment_count(int frag_size){
-	int current_size = 0, i, count = 0;
+	int cursize = 0, i, count = 0;
 	for (i = 0; i < mem_size; i++){
 		if (memory[i] == 0){
-			current_size++;
+			// still in a chunk
+			cursize++;
 		}
 		else{
-			if (current_size <= frag_size && current_size > 0){
+			if (cursize <= frag_size && cursize > 0){
 				count++;
 			}
-			current_size = 0;
+			cursize = 0;
 		}
 	}
 	return count;
@@ -104,13 +234,13 @@ void mem_clear(){
  Allocate physical memory to size. This function should
  only be called once near the beginning of your main function.
  */
- void mem_init(int size)
- {
-   memory = malloc(sizeof(dur_t)*size);
-   mem_size = size;
-   last_placement_position = 0;
-   mem_clear();
- }
+void mem_init( unsigned int size )
+{
+	memory = malloc( sizeof(unsigned int)*size );
+	mem_size = size;
+	last_placement_position = 0;
+	mem_clear();
+}
 
 /*
  Deallocate physical memory. This function should
@@ -118,154 +248,4 @@ void mem_clear(){
  */
 void mem_free(){
 	free( memory );
-}
-
-/*
-  Print memory for testing/debugging purposes.  This is an optional
-  routine to write, but highly recommended!  You will need to test and
-  debug your allocation algorithms.  Calling this routine in your
-  main() after every allocation (successful or not) will help in this
-  endeavor.  NOTE: you should print the memory contents in contiguous
-  blocks, rather than single units; otherwise, the output will be very
-  long.
- */
-void print_mem(){
-	int i;
-	printf("memory: ");
-	for (i = 0; i < mem_size; i++){
-		printf("%d ", memory[i]);
-	}
-	printf("\n");
-}
-
-/*
-	helper method to return the size of a chunk of memory at index start_index
-*/
-int getblock(int start_index){
-	int i, current_size = 0;
-	for (i = start_index; i < mem_size; i++){
-		if (memory[i] == 0){
-			current_size++;
-		}
-		else break;
-	}
-	return current_size;
-}
-
-/*
-	helper method to return the index of the first empty position
-*/
-int getfirstempty(){
-	int i;
-	for (i = 0; i < mem_size; i++){
-		if (memory[i] == 0){
-			return i;
-		}
-	}
-	return -1;
-}
-int firstfit(int size, int duration){
-	int i, block_size, done = 0, tries = 0;
-	i = getfirstempty();
-	// no free memory
-	if (i == -1){
-		return -1;
-	}
-	while (i < mem_size && !done){
-		block_size = getblock(i);
-		if (block_size <= 0){
-			i++;
-		}
-		else if (block_size >= size){
-			// allocate it
-			allocate(size, duration, i);
-			done = 1;
-		}
-		else {
-			tries += 1;
-			i += block_size;
-		}
-	}
-	if (done) {
-		return tries;
-	}
-	else{
-		return -1;
-	}
-}
-
-int nextfit(int size, int duration){
-	int i, block_size, done = 0, tries = 0, hitend = 0;
-	i = last_placement_position;
-	while (i < mem_size && !done){
-		block_size = getblock(i);
-		if (block_size <= 0){
-			i++;
-		}
-		else if (block_size >= size){
-			allocate(size, duration, i);
-			last_placement_position = i;
-			done = 1;
-		}
-		else {
-			// probed a block of memory
-			tries++;
-			i += block_size;
-			if (!hitend && i >= mem_size){
-				// circled
-				hitend = 1;
-				i = i % mem_size;
-			}
-		}
-	}
-	if (done){
-		return tries;
-	} else {
-		return -1;
-	}
-}
-
-int bestfit(int size, int duration){
-   int i, block_size, found = 0, best_index, best_size = mem_size + 1, tries = 0;
-   i = getfirstempty();
-   while (i < mem_size){
-      block_size = getblock(i);
-      if (block_size <= 0){
-         i++;
-      }
-      else if (block_size == size){
-         found = 1;
-         return i;
-      }
-      else if (block_size > size && block_size < best_size){
-         // chunk found can fit the block and
-         // it is smaller than the next smallest block
-         best_index = i;
-         best_size = block_size;
-			found = 1;
-			i += block_size;
-      }
-      else {
-         // block_size is smaller than size
-			tries++;
-			i += block_size;
-      }
-   }
-
-	if (found){
-		//success
-		allocate(size, duration, best_index);
-		return tries;
-	}
-	else{
-		// failed to allocate memory on this pass
-		return -1;
-	}
-}
-
-void allocate(int size, int duration, int start_index){
-	int x;
-	for (x = 0; x < size; x++){
-		memory[start_index + x] = duration;
-	}
 }
