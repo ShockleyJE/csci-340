@@ -1,13 +1,23 @@
-#include <stdio.h>    /* for printf */
-#include <stdlib.h>   /* for string to integer conversion, random numbers */
+#include <stdio.h>
+#include <stdlib.h>
+
 #include "mem.h"
+
+
+/* minimum and maximum duration of use for an allocated block of memory */
+#define MIN_DURATION      3
+#define MAX_DURATION     25
+
+/* minimum and maximum allocation request size */
+#define MIN_REQUEST_SIZE    3
+#define MAX_REQUEST_SIZE  100
 
 /*
   The main program will accept four paramemters on the command line.
   The first parameter is the memory size.  The second parameter is the
   duration of the each simulation run.  The third parameter is the
   number of times to repeat each experiment (ie. number of duration). The
-  fourth parameter is a random number seed. Here is an example command
+  fourth parameter is a random number seedr. Here is an example command
   line:
 
   ./hw7 1000 3000 100 1235
@@ -18,79 +28,64 @@
   with the value 1235.
 */
 
-/* min & max duration of use for a block of memory */
-#define MIN_DURATION      3
-#define MAX_DURATION     25
+int main(int argc, char** argv){
 
-/* min & max memory request sizes */
-#define MIN_REQUEST_SIZE    3
-#define MAX_REQUEST_SIZE  100
+	if (argc != 5){
+		fprintf(stderr, "expected 4 args in form: memory size,  duration, iterations, seed\n", argc, argv[0]);
+		exit(1);
+	}
 
-int main(int argc, char** argv)
-{
+	int memory_size, iterations, duration, seedr, i, j, result;
 
-  //check for 4 parameters at command line
-  if( argc != 5)
-  {
-    fprintf(stderr, "%s arguments, expected 4. Terminating\n", );
-    exit(1);
-  }
-  //bring in arguments from command line
-  int memorysize= atoi(argv[1]);
-  int duration= atoi(argv[2]);
-  int iterations= atoi(argv[3]);
-  int seedr= atoi(argv[4]);
-  //initialize memory bounds and free memory limit
-  meminit(memorysize);
-  //seed the random
-  srand(seedr);
-  //set ranges from defined constants
-  int duration_range = MAX_DURATION - MIN_DURATION;
-	int size_range = MAX_REQUEST_SIZE - MIN_REQUEST_SIZE;
+	memory_size = atoi(argv[1]);
+	duration = atoi(argv[2]);
+	iterations = atoi(argv[3]);
+	seedr = atoi(argv[4]);
+	mem_init(memory_size);
 
-  //keep track of which which method we are using
+	srand(seedr);
+	// then mult the percentages by the appropriate scale:
+	duration_range = MAX_DURATION - MIN_DURATION;
+	size_range = MAX_REQUEST_SIZE - MIN_REQUEST_SIZE;
+
+	//keep track of which which method we are using
   // 0= First fit, 1= Next fit, 2= best fit
-  int whichFit;
-  char *fit_string;
-  enum mem_strategies strategy;
+	int method_switch;
+	char *strategy_string;
+	enum mem_strategies strategy;
+	int  fragmentations = 0, misses = 0, probes = 0;
+	int size_range, duration_range;
+	int  duration_temp, size_temp;
 
-  for (whichFit = 0; whichFit <= 2; whichFit++){
+	for (method_switch = 0; method_switch <= 2; method_switch++){
 		fragmentations = 0;
 		misses = 0;
 		probes = 0;
 		mem_clear();
-		switch (whichFit){
+		switch (method_switch){
 			case 0:
 				strategy = FIRST;
-				fit_string = "FIRST\0";
+				strategy_string = "FIRST\0";
 				break;
 			case 1:
 				strategy = NEXT;
-				fit_string = "NEXT\0";
+				strategy_string = "NEXT\0";
 				break;
 			case 2:
 				strategy = BEST;
-				fit_string = "BEST\0";
+				strategy_string = "BEST\0";
 				break;
 			default:
 				fprintf(stderr, "enumerator error, shouldn't happen\n");
 				exit(1);
 		}
-		for (i = 0; i < duration; i++){
-			// each iteration in this loop is a full test with a single
-			// placement strategy
+		for (i = 0; i < iterations; i++){
 
-			for (j = 0; j < iterations; j++){
-				// each iteration in this loop represents one time unit
-
-				// use one set of memory for all of *iterations*
-				// then clear it out and do it again (outer loop)
-
-				// get random number in the right range
-				// by getting a num between 0-range, then adding min
-				int duration_temp = (rand() % (duration_range + 1)) + MIN_DURATION;
-   			int size_temp = (rand() % (size_range + 1)) + MIN_REQUEST_SIZE;
+			for (j = 0; j < duration; j++){
+				duration_temp = (rand() % (duration_range + 1)) + MIN_DURATION;
+   			size_temp = (rand() % (size_range + 1)) + MIN_REQUEST_SIZE;
 				result = mem_allocate(strategy, size_temp, duration_temp);
+
 				if (result == -1){
 					misses += 1;
 				}
@@ -101,10 +96,9 @@ int main(int argc, char** argv)
 			}
 			fragmentations += mem_fragment_count(3);
 		}
-	printf("%s:\tavg fragmentation: %.3f\tavg failures: %.3f\tavg probes: %.5f\n", fit_string, ((double) fragmentations) / ((double) duration), ((double) misses)/((double) duration), ((double) probes)/((double) duration));
+	printf("%s:\tavg fragmentation: %.3f\tavg failures: %.3f\tavg probes: %.5f\n", strategy_string, ((double) fragmentations) / ((double) iterations), ((double) misses)/((double) iterations), ((double) probes)/((double) iterations));
 
 	}
 	mem_free();
-
   return 0;
 }
